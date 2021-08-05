@@ -1,15 +1,10 @@
 package com.gomezrondon.uplaodfile.controller;
 
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageOptions;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,8 +28,10 @@ public class UploadFileController {
     @Value("${gcs-upload-flag:false}")
     private Boolean isUpload;
 
+    private final Storage storage;
 
-    public UploadFileController() {
+    public UploadFileController(Storage storage) {
+        this.storage = storage;
         String currentDir = System.getProperty("user.dir");
         String separator = System.getProperty("file.separator");
         directory = currentDir + separator + "data" + separator;
@@ -66,18 +62,6 @@ public class UploadFileController {
     }
 
     public void upload(String filePath) throws IOException {
-        Resource resource = new ClassPathResource("mycreds.json");
-        InputStream inputStream = resource.getInputStream();
-
-        GoogleCredentials credentials = ServiceAccountCredentials.fromStream(inputStream);
-
-        Storage storage = StorageOptions.newBuilder()
-                .setCredentials(credentials)
-                .build()
-                .getService();
-
-//        Storage storage = StorageOptions.getDefaultInstance().getService();
-
         BlobId blobId = BlobId.of(bucketName, objectName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
         storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));

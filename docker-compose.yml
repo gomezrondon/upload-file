@@ -7,5 +7,6 @@ services:
       - BUCKET_NAME=
       - FILE_OBJECT_NAME=
       - UPLOAD_FLAG=true
+      - PROFILE=default
     ports:
       - 8080:8080
