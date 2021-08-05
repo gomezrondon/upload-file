@@ -1,0 +1,12 @@
+[
+{
+  "name":"com.google.api.client.json.GenericJson",
+  "allDeclaredFields":true,
+  "methods":[{"name":"<init>","parameterTypes":[] }]
+},
+  {
+    "name":"com.google.api.client.util.GenericData",
+    "allDeclaredFields":true,
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  }
+]

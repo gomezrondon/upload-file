@@ -1,0 +1,11 @@
+version: '2.1'
+
+services:
+  uplaod-file:
+    image: upload-file:latest
+    environment:
+      - BUCKET_NAME=
+      - FILE_OBJECT_NAME=
+      - UPLOAD_FLAG=true
+    ports:
+      - 8080:8080
