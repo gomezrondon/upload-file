@@ -1,6 +1,9 @@
 # how to call the post endpoint and pass the file using curl
 curl -X POST  -F file=@C:/tmp/text.txt  http://localhost:8080/file-upload
 
+# new version of enpoint OJO con el puerto
+curl -X POST  -F file=@C:/tmp/text.txt  http://localhost:8081/stt/lang/en --output audio4.mp3
+
 # gets time
 curl  http://localhost:8080/time
 
@@ -9,6 +12,7 @@ docker push gcr.io/<PROJECT-ID>/uplaod-file:v1
 
 #download and image
 curl http://localhost:8080/image --output image33.png
+curl http://localhost:8080/mp3 --output audio33.mp3
 
 # build image
 docker build . -t upload-file
