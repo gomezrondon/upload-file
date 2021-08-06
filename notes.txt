@@ -7,6 +7,8 @@ curl  http://localhost:8080/time
 docker tag upload-file:latest gcr.io/<PROJECT-ID>/uplaod-file:v1
 docker push gcr.io/<PROJECT-ID>/uplaod-file:v1
 
+#download and image
+curl http://localhost:8080/image --output image33.png
 
 # build image
 docker build . -t upload-file

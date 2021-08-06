@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
@@ -59,6 +60,13 @@ public class UploadFileController {
             this.upload(filePath);
         }
         return "success";
+    }
+
+    @GetMapping(value = "/image") //just testing
+    public @ResponseBody byte[] getImage() throws IOException {
+        String file = directory + "thunbnail.png";
+        byte[] bytes = Files.readAllBytes(Paths.get(file));
+        return bytes;
     }
 
     public void upload(String filePath) throws IOException {
