@@ -2,8 +2,8 @@ plugins {
 	id 'org.springframework.boot' version '2.5.3'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
-//	id 'org.springframework.experimental.aot' version '0.10.2-SNAPSHOT'
-//	id 'org.graalvm.buildtools.native' version '0.9.1'
+	id 'org.springframework.experimental.aot' version '0.10.2-SNAPSHOT'
+	id 'org.graalvm.buildtools.native' version '0.9.1'
 }
 
 group = 'com.gomezrondon'
@@ -17,6 +17,7 @@ repositories {
 
 
 dependencies {
+	implementation 'commons-io:commons-io:2.11.0'
 	implementation group: 'com.google.cloud', name: 'google-cloud-storage', version: '1.118.0'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -26,7 +27,7 @@ test {
 	useJUnitPlatform()
 }
 
-//bootBuildImage {
-//	builder = 'paketobuildpacks/builder:tiny'
-//	environment = ['BP_NATIVE_IMAGE': 'true']
-//}
+bootBuildImage {
+	builder = 'paketobuildpacks/builder:tiny'
+	environment = ['BP_NATIVE_IMAGE': 'true']
+}
