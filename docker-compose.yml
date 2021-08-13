@@ -2,11 +2,11 @@ version: '2.1'
 
 services:
   uplaod-file:
-    image: upload-file:latest
+    image: uplaod-file:latest
     environment:
       - BUCKET_NAME=
       - FILE_OBJECT_NAME=
-      - UPLOAD_FLAG=true
+      - FLASK_APP_URL=
       - PROFILE=default
     ports:
       - 8080:8080
