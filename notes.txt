@@ -2,7 +2,7 @@
 curl -X POST  -F file=@C:/tmp/text.txt  http://localhost:8080/file-upload
 
 # new version of enpoint OJO con el puerto
-curl -X POST  -F file=@C:/tmp/text.txt  http://localhost:8081/stt/lang/en --output audio4.mp3
+curl -X POST  -F file=@C:/tmp/text.txt  http://localhost:8080/stt/lang/en --output audio4.mp3
 
 # gets time
 curl  http://localhost:8080/time
@@ -16,3 +16,8 @@ curl http://localhost:8080/mp3 --output audio33.mp3
 
 # build image
 docker build . -t upload-file
+
+#install pack
+choco install pack --version=0.20.0
+# build image with pack
+pack build --builder=gcr.io/buildpacks/builder:v1 uplaod-file:latest
