@@ -1,15 +1,19 @@
 package com.gomezrondon.uplaodfile.controller;
 
 
+import com.google.cloud.spring.vision.CloudVisionTemplate;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import org.json.simple.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,6 +30,7 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 
 @RestController
+@CrossOrigin(origins = {"${settings.cors_origin}"})
 public class UploadFileController {
 
     private String directory;
@@ -38,6 +43,11 @@ public class UploadFileController {
 
     private final Storage storage;
     private final RestTemplate restTemplate;
+
+    @Autowired private ResourceLoader resourceLoader;
+
+    @Autowired
+    private CloudVisionTemplate cloudVisionTemplate;
 
     public UploadFileController(Storage storage, RestTemplate restTemplate) {
         this.storage = storage;
@@ -56,11 +66,21 @@ public class UploadFileController {
         }
     }
 
+
+
     @GetMapping("/time")
-    public String getTime() throws IOException {
-        return "the time is: "+ LocalDateTime.now();
+    public String getTime() {
+        String textFromImage = this.cloudVisionTemplate.extractTextFromImage(this.resourceLoader.getResource("classpath:eng-test.png"));
+        return textFromImage;
     }
 
+    /**
+     * Convert a test file to an audio fiel (text to speech)
+     * @param file
+     * @param language
+     * @return
+     * @throws IOException
+     */
     @PostMapping("/stt/lang/{language}")
     public @ResponseBody byte[] uploadFile(@RequestParam("file") MultipartFile file, @PathVariable String language) throws IOException {
         String filePath = directory + file.getOriginalFilename();
@@ -71,6 +91,11 @@ public class UploadFileController {
         return responseEntity.getBody();
     }
 
+    /**
+     * Call a python microservice to convert the text to an audio file
+     * @param language chosen language
+     * @return audio file in array of bytes
+     */
     private ResponseEntity<byte[]> getAudioFile(String language) {
         var headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -82,6 +107,11 @@ public class UploadFileController {
         return responseEntity;
     }
 
+    /**
+     * Upload file to a gcp bucket
+     * @param filePath path of the file
+     * @throws IOException
+     */
     public void upload(String filePath) throws IOException {
         BlobId blobId = BlobId.of(bucketName, objectName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
