@@ -5,26 +5,23 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
@@ -65,30 +62,57 @@ public class UploadFileController {
         return "the time is: "+ LocalDateTime.now();
     }
 
+
+    @PostMapping(value = "/upload/file2")
+    public Mono<Void> uploadHandler(@RequestBody Flux<Part> parts) {
+
+        Path path = Paths.get(directory);
+
+        return parts
+                .filter(part -> part instanceof FilePart) // only retain file parts
+                .ofType(FilePart.class) // convert the flux to FilePart
+                .flatMap(filePart -> filePart.transferTo(path.resolve(filePart.filename())))
+                .then();
+    }
+
+
     @PostMapping("/stt/lang/{language}")
-    public @ResponseBody
-    byte[] uploadFile(@RequestParam("file") MultipartFile file, @PathVariable String language) throws IOException {
+    public @ResponseBody Flux<byte[]> uploadFile(@RequestBody Flux<Part> parts, @PathVariable String language) throws IOException {
+
+        Path path = Paths.get(directory);
+//        byte[] response = getAudioFile2(language);
+        System.out.println("Post request executed! ");
+        return parts
+                .filter(part -> part instanceof FilePart) // only retain file parts
+                .ofType(FilePart.class) // convert the flux to FilePart
+                .flatMap(filePart -> filePart.transferTo(path.resolve(filePart.filename())))
+                .thenMany(getAudioFile2(language));
+    }
+
+
+/*    @PostMapping("/stt/lang/{language}")
+    public @ResponseBody byte[] uploadFile(@RequestParam("file") MultipartFile file, @PathVariable String language) throws IOException {
         String filePath = directory + file.getOriginalFilename();
         file.transferTo(new File(filePath));
         this.upload(filePath);
         byte[] response = getAudioFile2(language);
         System.out.println("Post request executed! ");
         return response;
-    }
+    }*/
 
-    private byte[] getAudioFile2(String language) {
+    private Mono<byte[]> getAudioFile2(String language) {
         var postBody = new PostBody(bucketName, language);
-        byte[] bytes = builder.build()
+        return builder.build()
                 .post()
                 .uri(flaskAppUrl + "/process")
                 .contentType(APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .body(Mono.just(postBody), PostBody.class)
                 .retrieve()
-                .bodyToMono(byte[].class)
-                .block();
+                .bodyToMono(byte[].class);
+//                .block();
 
-        return bytes;
+//        return bytes;
     }
 
     public void upload(String filePath) throws IOException {
