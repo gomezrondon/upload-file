@@ -16,3 +16,10 @@ curl http://localhost:8080/mp3 --output audio33.mp3
 
 # build image
 docker build . -t upload-file
+
+java -agentlib:native-image-agent=config-output-dir=META-INF/native-image -jar ./build/libs/uplaod-file-latest.jar
+
+
+// borrar images y forzar
+docker images | grep "none" | awk '{print $3}' | xargs docker rmi -f
+docker images | grep "uplaod-file" | awk '{print $3}' | xargs docker rmi -f
