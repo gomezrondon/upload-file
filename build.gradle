@@ -17,6 +17,7 @@ repositories {
 
 
 dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 	implementation group: 'com.google.cloud', name: 'google-cloud-storage', version: '1.118.0'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
