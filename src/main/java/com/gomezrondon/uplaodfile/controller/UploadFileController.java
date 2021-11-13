@@ -78,17 +78,17 @@ public class UploadFileController {
 
     private byte[] getAudioFile2(String language) {
         var postBody = new PostBody(bucketName, language);
-        Flux<DataBuffer> dataBufferFlux = builder.build()
+        byte[] bytes = builder.build()
                 .post()
                 .uri(flaskAppUrl + "/process")
+                .contentType(APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_OCTET_STREAM)
                 .body(Mono.just(postBody), PostBody.class)
                 .retrieve()
-                .bodyToFlux(DataBuffer.class);
-        String currentDir = System.getProperty("user.dir");
-        DataBufferUtils.write(dataBufferFlux, Path.of(currentDir+"/audio33.mp3"), StandardOpenOption.CREATE).block();
+                .bodyToMono(byte[].class)
+                .block();
 
-        return null;
+        return bytes;
     }
 
     public void upload(String filePath) throws IOException {

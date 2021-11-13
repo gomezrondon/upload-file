@@ -1,5 +1,8 @@
 package com.gomezrondon.uplaodfile.controller;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostBody {
     private String bucket;
     private String lang;
