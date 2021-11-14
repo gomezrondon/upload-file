@@ -58,8 +58,8 @@ public class UploadFileController {
     }
 
     @GetMapping("/time")
-    public String getTime() throws IOException {
-        return "the time is: "+ LocalDateTime.now();
+    public Mono<String> getTime() {
+        return Mono.just("the time is: "+ LocalDateTime.now());
     }
 
 
@@ -68,25 +68,65 @@ public class UploadFileController {
 
         Path path = Paths.get(directory);
 
-        return parts
-                .filter(part -> part instanceof FilePart) // only retain file parts
-                .ofType(FilePart.class) // convert the flux to FilePart
-                .flatMap(filePart -> filePart.transferTo(path.resolve(filePart.filename())))
+        return uploadFileReturnFileName(parts, path)
+                .flatMap(filename -> {
+                    try {
+                        upload(path.resolve(filename).toAbsolutePath().toString(), bucketName, filename);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return Mono.empty();
+                })
                 .then();
     }
-
 
     @PostMapping("/stt/lang/{language}")
     public @ResponseBody Flux<byte[]> uploadFile(@RequestBody Flux<Part> parts, @PathVariable String language) throws IOException {
 
         Path path = Paths.get(directory);
-//        byte[] response = getAudioFile2(language);
         System.out.println("Post request executed! ");
+
+        return uploadFileReturnFileName(parts, path)
+                .flatMap(filename -> {
+                    try {
+                        upload(path.resolve(filename).toAbsolutePath().toString(), bucketName, objectName);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return Mono.empty();
+                }) // upload to gcp bucket
+                .thenMany(getAudioFile2(language));  // give info to flask app where is file in bucket to convert to byte[]
+    }
+
+    private Flux<String> uploadFileReturnFileName(@RequestBody Flux<Part> parts, Path path) {
         return parts
                 .filter(part -> part instanceof FilePart) // only retain file parts
                 .ofType(FilePart.class) // convert the flux to FilePart
-                .flatMap(filePart -> filePart.transferTo(path.resolve(filePart.filename())))
-                .thenMany(getAudioFile2(language));
+                .flatMap(filePart -> {
+                    return filePart.transferTo(path.resolve(filePart.filename())) //returns Mono<void>
+                            .then(Mono.just(filePart.filename())); // then I return the filename
+                });
+    }
+
+    private Mono<byte[]> getAudioFile2(String language) {
+        var postBody = new PostBody(bucketName, language);
+        return builder.build()
+                .post()
+                .uri(flaskAppUrl + "/process")
+                .contentType(APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_OCTET_STREAM)
+                .body(Mono.just(postBody), PostBody.class)
+                .retrieve()
+                .bodyToMono(byte[].class);
+
+    }
+
+    public void upload(String filePath, String bucketName, String objectName) throws IOException {
+        BlobId blobId = BlobId.of(bucketName, objectName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+        storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));
+
+        System.out.println("File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
     }
 
 
@@ -99,29 +139,6 @@ public class UploadFileController {
         System.out.println("Post request executed! ");
         return response;
     }*/
-
-    private Mono<byte[]> getAudioFile2(String language) {
-        var postBody = new PostBody(bucketName, language);
-        return builder.build()
-                .post()
-                .uri(flaskAppUrl + "/process")
-                .contentType(APPLICATION_JSON)
-                .accept(MediaType.APPLICATION_OCTET_STREAM)
-                .body(Mono.just(postBody), PostBody.class)
-                .retrieve()
-                .bodyToMono(byte[].class);
-//                .block();
-
-//        return bytes;
-    }
-
-    public void upload(String filePath) throws IOException {
-        BlobId blobId = BlobId.of(bucketName, objectName);
-        BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-        storage.create(blobInfo, Files.readAllBytes(Paths.get(filePath)));
-
-        System.out.println("File " + filePath + " uploaded to bucket " + bucketName + " as " + objectName);
-    }
 
 
 }
