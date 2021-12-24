@@ -1,8 +1,8 @@
 plugins {
-	id 'org.springframework.boot' version '2.6.1'
+	id 'org.springframework.boot' version '2.6.2'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
-	id 'org.springframework.experimental.aot' version '0.11.0'
+	id 'org.springframework.experimental.aot' version '0.11.1'
 }
 
 group = 'com.gomezrondon'
@@ -13,6 +13,7 @@ repositories {
 	maven { url 'https://repo.spring.io/release' }
 	mavenCentral()
 }
+
 
 ext {
 	set('springCloudGcpVersion', "2.0.4")
