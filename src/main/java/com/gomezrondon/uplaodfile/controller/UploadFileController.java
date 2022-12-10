@@ -6,6 +6,7 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -24,20 +25,17 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
-
-import org.springframework.core.io.Resource;
 
 
+import static com.gomezrondon.uplaodfile.Utils.borrarContenidoCarpeta;
+import static com.gomezrondon.uplaodfile.Utils.zipFilesInList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @RestController
@@ -62,6 +60,12 @@ public class UploadFileController {
         String separator = System.getProperty("file.separator");
         directory = currentDir + separator + "data" + separator;
 
+        manageWorkingFolders(directory);
+        String zipFolder = currentDir + separator + "zipFolder" + separator;
+        manageWorkingFolders(zipFolder);
+    }
+
+    private void manageWorkingFolders(String directory) {
         Path path = Paths.get(directory);
         if (!Files.exists(path)) {
             try {
@@ -69,6 +73,9 @@ public class UploadFileController {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }else {
+            // Si la carpeta existe, borra todo lo que hay dentro de ella
+            borrarContenidoCarpeta(path);
         }
     }
 
@@ -97,32 +104,37 @@ public class UploadFileController {
 
 
     @PostMapping("/zip-files")
-    public void zipFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
+    public ResponseEntity<?> zipFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
+        //reseteamos la carpeta
+        Path path = Paths.get(directory);
+        borrarContenidoCarpeta(path);
+
+
         // Crea un archivo zip y agrega los archivos a él
 
-System.out.println("*******************************************");
-
-// Agrega cada archivo a la entrada del archivo zip
-        for (MultipartFile file : files) {
-            String filePath = directory + file.getOriginalFilename();
-            file.transferTo(new File(filePath));
-
-
+        if (files.isEmpty()) {
+            return ResponseEntity.badRequest().body("no files uploaded");
         }
 
-// Cierra el stream de salida
+        System.out.println("*******************************************");
+
+        var listFiles = new ArrayList<File>();
+        // Agrega cada archivo a la entrada del archivo zip
+        for (MultipartFile file : files) {
+            String filePath = directory + file.getOriginalFilename();
+            File newFile = new File(filePath);
+            file.transferTo(newFile);
+            listFiles.add(newFile);
+        }
+
+        String zipFileName = "zipFolder/zipfile.zip";
+        zipFilesInList(listFiles, zipFileName);
+
+        FileSystemResource resource = new FileSystemResource(zipFileName);
 
 
-
-        // Devuelve el archivo zip como una respuesta HTTP
-        // Crea un recurso para el archivo zip
-        FileSystemResource resource = new FileSystemResource("notes.txt");
-
-// Devuelve el archivo zip como una respuesta HTTP con el tipo de contenido "application/zip"
- /*       return ResponseEntity.ok()
-//                .contentType(MediaType.A)
+        return ResponseEntity.ok()
                 .body(resource);
-*/
     }
 
 
