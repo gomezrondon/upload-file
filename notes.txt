@@ -23,3 +23,27 @@ java -agentlib:native-image-agent=config-output-dir=META-INF/native-image -jar .
 // borrar images y forzar
 docker images | grep "none" | awk '{print $3}' | xargs docker rmi -f
 docker images | grep "uplaod-file" | awk '{print $3}' | xargs docker rmi -f
+
+----------
+curl -X POST \
+  http://localhost:8080/zip-files \
+  -H 'Content-Type: multipart/form-data' \
+  -F 'files=audio7.mp3' \
+  -F 'files=@<file2>' \
+  -F 'files=@<file3>' \
+  -o files.zip
+
+  ---------------
+  curl -X POST \
+    http://localhost:8080/zip-files \
+    -H 'Content-Type: multipart/form-data' \
+    -F 'files=notes.txt' \
+    -o files.zip
+
+### este funciona
+curl -X POST   -F files=@"notes.txt"  http://localhost:8080/zip-files
+### este funciona
+curl -X POST   -F files=@"notes.txt" -F files=@"Dockerfile" http://localhost:8080/zip-files
+
+
+

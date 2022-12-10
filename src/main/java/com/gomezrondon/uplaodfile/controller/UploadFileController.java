@@ -5,7 +5,9 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -13,16 +15,28 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+import org.springframework.core.io.Resource;
+
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -80,6 +94,38 @@ public class UploadFileController {
                 })
                 .then();
     }
+
+
+    @PostMapping("/zip-files")
+    public void zipFiles(@RequestParam("files") List<MultipartFile> files) throws IOException {
+        // Crea un archivo zip y agrega los archivos a él
+
+System.out.println("*******************************************");
+
+// Agrega cada archivo a la entrada del archivo zip
+        for (MultipartFile file : files) {
+            String filePath = directory + file.getOriginalFilename();
+            file.transferTo(new File(filePath));
+
+
+        }
+
+// Cierra el stream de salida
+
+
+
+        // Devuelve el archivo zip como una respuesta HTTP
+        // Crea un recurso para el archivo zip
+        FileSystemResource resource = new FileSystemResource("notes.txt");
+
+// Devuelve el archivo zip como una respuesta HTTP con el tipo de contenido "application/zip"
+ /*       return ResponseEntity.ok()
+//                .contentType(MediaType.A)
+                .body(resource);
+*/
+    }
+
+
 
     @PostMapping("/stt/lang/{language}")
     public @ResponseBody Flux<byte[]> uploadFile(@RequestBody Flux<Part> parts, @PathVariable String language) throws IOException {
